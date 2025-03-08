@@ -1,6 +1,11 @@
-# Auto Canvas Quiz
+# Canvas_Terminator
 
 An automated tool to solve Canvas quizzes using Selenium WebDriver and GPT-based AI models.
+
+## Disclaimer
+
+Note: Please ensure compliance with your school's academic policies when using this tool. It is intended for research purposes only. Some features require legitimate API services, so please apply for the necessary permissions.
+注意：实际使用时请确保遵守学校教学管理规定，本工具仅用于技术研究目的。部分功能需要配合合法的API服务使用，请自行申请相关接口权限。
 
 ## Features
 
@@ -29,12 +34,18 @@ git clone https://github.com/yourusername/Auto_Canvas_Quiz.git
 cd Auto_Canvas_Quiz
 ```
 
-2. Install required packages:
+2. (Optional) Create Virtual Environment
+````bash
+conda create -n canvas python=3.10
+conda activate canvas
+````
+
+3. Install required packages:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Set up environment variables:
+4. Set up environment variables:
 ```bash
 # Create .env file
 touch .env
@@ -55,11 +66,15 @@ python main.py
 2. The script will:
    - Login to Canvas automatically
    - Navigate to specified course
-   - Find available quizzes
-   - Take screenshots of questions
-   - Generate answers using AI
-   - Submit responses
-   - Save answers for future use
+    AI mode:
+        - Find available quizzes
+        - Take screenshots of questions
+        - Generate answers using AI
+        - Submit responses
+        - Save answers for future use
+    Saved Answer mode (only visible when there is local answer):
+        - load local answers
+        - Submit responses
 
 ## Project Structure
 
@@ -87,7 +102,7 @@ Auto_Canvas_Quiz/
 Answers are saved in JSON format:
 ```json
 {
-  "quiz_name": "Pre-Lab Quiz 1",
+  "quiz_name": "Quiz 1",
   "timestamp": "2025-03-08T14:30:00.123456",
   "answers": {
     "1": {
