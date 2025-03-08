@@ -24,3 +24,9 @@ datetime
 
 # Basic HTTP requests
 requests>=2.31.0
+
+# Image processing for OCR
+pip install pytesseract
+
+# Webmanager
+pip install webdriver-manager
