@@ -26,8 +26,14 @@ An automated tool to solve Canvas quizzes using Selenium WebDriver and GPT-based
 ## Prerequisites
 
 - Python 3.8+
-- Chrome/Chromium browser
+- Chrome browser
 - JAccount credentials for SJTU Canvas
+- Tesseract (Used to recognize the captcha when logging in)
+
+    For Ubuntu Users, you can use the following command:
+    ````bash
+    sudo apt-get install tesseract-ocr
+    ````
 
 ## Installation
 
@@ -82,16 +88,17 @@ python main.py
 ## Project Structure
 
 ```
-Auto_Canvas_Quiz/
-├── main.py              # Main entry point
+Canvas_Terminator/
+├── main.py             # Main entry point
 ├── solve.py            # Quiz solving logic
 ├── canvas.py           # Canvas interaction functions
 ├── webdriver.py        # Selenium WebDriver setup
 ├── gpt_client_bank.py  # GPT client implementations
 ├── prompt_bank.py      # AI prompts for different questions
+├── config.py           # Configurations
 ├── screenshots/        # Question screenshots
-├── answers/           # Saved quiz answers
-└── utils/             # Utility functions
+├── answers/            # Saved quiz answers
+└── utils/              # Utility functions
 ```
 
 ## Configuration
