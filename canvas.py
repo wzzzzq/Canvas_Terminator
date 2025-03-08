@@ -115,24 +115,27 @@ def submit_quiz(driver):
         print(f"Failed to submit quiz: {e}")
 
 def find_available_quizzes(driver, quiz_name):
-    """Find and verify available quizzes"""
-    # Get initial quiz list
+    """Find and verify available quizzes
+    
+    Returns:
+        dict: Dictionary mapping quiz titles to their URLs
+    """
     quizzes_data = driver.execute_script("return window.ENV;")
     assignments = quizzes_data["QUIZZES"]["assignment"]
     shanghai_tz = pytz.timezone('Asia/Shanghai')
     current_time = datetime.now().astimezone(shanghai_tz)
     
-    available_quizzes = []
+    available_quizzes = {}
+    potential_quizzes = {}
     
     # First pass: check basic conditions and get URLs
-    potential_quizzes = []
     for assignment in assignments:
         if quiz_name.lower() in assignment.get('title', '').lower():
-            potential_quizzes.append(assignment['html_url'])
+            potential_quizzes[assignment['title']] = assignment['html_url']
             print(f"\nFound quiz: {assignment['title']}")
     
     # Second pass: visit each quiz and verify availability
-    for quiz_url in potential_quizzes:
+    for title, quiz_url in potential_quizzes.items():
         try:
             driver.get(quiz_url)
             WebDriverWait(driver, 10).until(
@@ -151,7 +154,7 @@ def find_available_quizzes(driver, quiz_name):
             if lock_at:
                 try:
                     lock_time = datetime.fromisoformat(lock_at.replace('Z', '+00:00'))\
-                                      .astimezone(shanghai_tz)
+                               .astimezone(shanghai_tz)
                 except ValueError:
                     lock_time = None
             else:
@@ -162,9 +165,10 @@ def find_available_quizzes(driver, quiz_name):
                 (allowed_attempts == -1 or allowed_attempts > 0) and 
                 (not lock_time or current_time < lock_time)):
                 
-                available_quizzes.append(quiz_url)
+                available_quizzes[title] = quiz_url
+                
                 print(f"\nQuiz is available:")
-                print(f"Title: {quiz_details.get('title')}")
+                print(f"Title: {title}")
                 print(f"Current time: {current_time.strftime('%Y-%m-%d %H:%M:%S %Z')}")
                 print(f"Lock time: {lock_time.strftime('%Y-%m-%d %H:%M:%S %Z') if lock_time else 'No lock time'}")
                 print(f"Time until lock: {lock_time - current_time if lock_time else 'N/A'}")
@@ -175,4 +179,7 @@ def find_available_quizzes(driver, quiz_name):
             continue
     
     print(f"\nTotal available quizzes found: {len(available_quizzes)}")
+    for title, url in available_quizzes.items():
+        print(f"- {title}: {url}")
+    
     return available_quizzes

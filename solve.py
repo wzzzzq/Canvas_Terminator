@@ -1,10 +1,22 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from gpt_client_bank import get_gpt_client_dict
+import os
+from datetime import datetime
+from canvas import *
+from prompt_bank import *
+import json
 
-def extract_questions_and_options(driver):
-    """Extract all questions and their options from Canvas quiz page"""
+def extract_questions_and_options(driver, quiz_name):
+    """Extract all questions and their options from Canvas quiz page and save screenshots"""
     quiz_data = []
+    
+    # Create screenshots directory with sanitized quiz name
+    safe_quiz_name = "".join(c for c in quiz_name if c.isalnum() or c in (' ', '-', '_')).strip()
+    screenshot_dir = os.path.join(os.path.dirname(__file__), 'screenshots', safe_quiz_name)
+    os.makedirs(screenshot_dir, exist_ok=True)
+    
     try:
         # Wait for quiz content to load
         WebDriverWait(driver, 10).until(
@@ -16,61 +28,301 @@ def extract_questions_and_options(driver):
         
         for i, question_group in enumerate(question_groups, 1):
             try:
-                # Extract question text
-                question_text = question_group.find_element(
-                    By.CLASS_NAME,
-                    "user_content"
-                ).text.strip()
+                # Find question type from display_question div classes
+                display_question = question_group.find_element(By.CLASS_NAME, "display_question")
+                class_list = display_question.get_attribute("class").split()
+                # Filter out common classes to get the specific question type
+                question_type = next((cls for cls in class_list 
+                                   if cls not in ["display_question", "question"]), "unknown")
+                #print(f"Question {i} type: {question_type}")
                 
-                # Extract question type
-                type_element = question_group.find_element(
-                    By.CLASS_NAME,
-                    "question_type"
+                # Scroll element into view
+                driver.execute_script("arguments[0].scrollIntoView(true);", question_group)
+                
+                # Wait for element to be fully visible
+                WebDriverWait(driver, 5).until(
+                    lambda x: question_group.is_displayed()
                 )
-                question_type = type_element.text.strip()
                 
-                # Extract options using answer_label class
-                options = []
-                try:
-                    option_elements = question_group.find_elements(
-                        By.CLASS_NAME,
-                        "answer_label"
-                    )
-                    
-                    for option in option_elements:
-                        option_text = option.text.strip()
-                        if option_text:  # Only add non-empty options
-                            options.append(option_text)
-                except Exception as e:
-                    print(f"No options found for question {i}")
+                # Take screenshot of question
+                screenshot_path = os.path.join(screenshot_dir, f'question_{i}.png')
+                question_group.screenshot(screenshot_path)
                 
-                # Determine if it's a choice question based on options presence
-                question_type = "choice" if options else "open"
-                
-                # Store question and its options
-                quiz_data.append({
+                # Store question data
+                question_data = {
                     'question_number': i,
-                    'question_text': question_text,
-                    'options': options,
-                    'type': question_type
-                })
-                
-                print(f"\nQuestion {i}: {question_text}")
-                print("Options:")
-                for j, opt in enumerate(options, 1):
-                    print(f"{j}. {opt}")
+                    'type': question_type,
+                    'screenshot_path': screenshot_path
+                }
+                quiz_data.append(question_data)
                 
             except Exception as e:
-                print(f"Error extracting question {i}: {e}")
+                print(f"Error processing question {i}: {e}")
                 continue
         
-        if not quiz_data:
-            print("No questions found")
-            return None
-        
-        print(f"\nTotal questions found: {len(quiz_data)}")
         return quiz_data
-
+        
     except Exception as e:
-        print(f"Failed to extract questions and options: {e}")
+        print(f"Failed to process quiz: {e}")
         return None
+
+def click_answer_option(driver, question_group, response):
+    """Click the radio button corresponding to the answer choice"""
+    try:
+        # Find all answer options in this question group
+        options = question_group.find_elements(By.CLASS_NAME, "answer")
+        
+        # Convert response to index (A=0, B=1, etc.)
+        index = ord(response.upper()) - ord('A')
+        
+        if 0 <= index < len(options):
+            # Find and click the radio button
+            radio = options[index].find_element(By.CSS_SELECTOR, "input[type='radio']")
+            value = radio.get_attribute("value")
+            radio.click()
+            print(f"Clicked option {response} with value: {value}")
+            return value
+        else:
+            print(f"Invalid answer index: {index} for response: {response}")
+            return None
+            
+    except Exception as e:
+        print(f"Error clicking answer option: {e}")
+        return None
+
+def click_answers_by_values(driver, question_group, values):
+    """Click radio buttons or checkboxes with matching values
+    
+    Args:
+        driver: Selenium WebDriver instance
+        question_group: WebElement representing the question container
+        values: List of values to match with input values
+    
+    Returns:
+        list: List of successfully clicked input values
+    """
+    try:
+        clicked_values = []
+        # Find all radio/checkbox inputs in this question group
+        inputs = question_group.find_elements(
+            By.CSS_SELECTOR, 
+            "input[type='radio'], input[type='checkbox']"
+        )
+        
+        # Click each input that matches a value in the list
+        for input_element in inputs:
+            value = input_element.get_attribute("value")
+            if value in values:
+                input_element.click()
+                clicked_values.append(value)
+                print(f"Clicked option with value: {value}")
+        
+        if not clicked_values:
+            print(f"No matching options found for values: {values}")
+        return clicked_values
+            
+    except Exception as e:
+        print(f"Error clicking answers by values: {e}")
+        return []
+
+def solve_all_quizzes(driver, quiz_name, url):
+    """Solve all available quizzes on the current page"""
+    try:
+        # Navigate to quiz and get questions
+        driver.get(url)
+        open_quiz(driver)
+        
+        quiz_data = extract_questions_and_options(driver, quiz_name)
+        # Initialize GPT client
+        client_dict = get_gpt_client_dict()
+        client = client_dict["GLM-4"]
+        
+        if quiz_data:
+            answers = []
+            # Wait for questions to load
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "question_holder"))
+            )
+            
+            # Get all question holders
+            question_holders = driver.find_elements(By.CLASS_NAME, "question_holder")
+            
+            for question in quiz_data:
+                try:
+                    # Get corresponding question group element
+                    question_group = question_holders[question['question_number'] - 1]
+                    
+                    # Get and process response
+                    prompt = get_prompt_bank(quiz_name, question['type'])
+                    response = client.send_image_with_history(prompt, question['screenshot_path'], max_tokens=256)
+                    print(f"Question {question['question_number']} response: {response}")
+                    
+                    if question['type'] == 'multiple_choice_question':
+                        response = response.strip().upper()
+                        if response and len(response) == 1:  # Ensure response is a single letter
+                            # Click the answer and record info
+                            value = click_answer_option(driver, question_group, response)
+                            answers.append({
+                                'question_number': question['question_number'],
+                                'type': question['type'],
+                                'response': response,
+                                'value': [value] if value else []  # Store as list
+                            })
+                            print(f"Question {question['question_number']} answered: {response}")
+                        else:
+                            print(f"Invalid response format for question {question['question_number']}: {response}")
+
+                    elif question['type'] == 'multiple_answers_question':
+                        response = response.strip().upper()
+                        if response and all(c.isalpha() for c in response):
+                            # Click the answers and record info
+                            values = []
+                            for answer in response:
+                                value = click_answer_option(driver, question_group, answer)
+                                if value:
+                                    values.append(value)
+                            answers.append({
+                                'question_number': question['question_number'],
+                                'type': question['type'],
+                                'response': response,
+                                'value': values  # Already a list
+                            })
+                            print(f"Question {question['question_number']} answered: {response}")
+                        else:
+                            print(f"Invalid response format for question {question['question_number']}: {response}")
+                    
+                    elif question['type'] == 'numerical_question':
+                        response = response.strip()
+                        if response and any(char.isdigit() for char in response):
+                            # Find and fill numerical input
+                            input_field = question_group.find_element(
+                                By.CSS_SELECTOR, 
+                                "input.numerical_question_input"
+                            )
+                            input_field.clear()
+                            input_field.send_keys(response)
+                            
+                            # Record answer info
+                            value = input_field.get_attribute("value")
+                            answers.append({
+                                'question_number': question['question_number'],
+                                'type': question['type'],
+                                'response': response,
+                                'value': [value] if value else []  # Store as list
+                            })
+                            print(f"Question {question['question_number']} answered: {response}")
+                        else:
+                            print(f"Invalid numerical response for question {question['question_number']}: {response}")
+
+                except Exception as e:
+                    print(f"Error processing question {question['question_number']}: {e}")
+                    continue
+            
+            # After all questions are processed but before submitting
+            # Save answers to JSON file
+            try:
+                # Create answers directory if it doesn't exist
+                answers_dir = os.path.join(os.path.dirname(__file__), 'answers')
+                os.makedirs(answers_dir, exist_ok=True)
+                
+                # Create filename with quiz name
+                safe_quiz_name = "".join(c for c in quiz_name if c.isalnum() or c in (' ', '-', '_')).strip()
+                json_path = os.path.join(answers_dir, f"{safe_quiz_name}.json")
+                
+                # Convert answers list to dictionary with question numbers as keys
+                answers_dict = {
+                    str(answer['question_number']): {
+                        'type': answer['type'],
+                        'response': answer['response'],
+                        'value': answer['value']
+                    } for answer in answers
+                }
+                
+                # Create answer data structure
+                answer_data = {
+                    'quiz_name': quiz_name,
+                    'timestamp': datetime.now().isoformat(),
+                    'answers': answers_dict
+                }
+                
+                # Write to JSON file
+                with open(json_path, 'w', encoding='utf-8') as f:
+                    json.dump(answer_data, f, indent=2)
+                print(f"Answers saved to: {json_path}")
+            
+            except Exception as e:
+                print(f"Error saving answers to JSON: {e}")
+            
+            submit_quiz(driver)
+            sleep(10)
+            return answers
+        else:
+            print(f"Failed to extract questions for quiz: {quiz_name}")
+            return None
+            
+    except Exception as e:
+        print(f"Error processing quiz '{quiz_name}': {e}")
+        return None
+
+def load_answers(driver, quiz_name, url):
+    """Load answers from JSON file and submit them"""
+    try:
+        # Create answers directory if it doesn't exist
+        answers_dir = os.path.join(os.path.dirname(__file__), 'answers')
+        safe_quiz_name = "".join(c for c in quiz_name if c.isalnum() or c in (' ', '-', '_')).strip()
+        json_path = os.path.join(answers_dir, f"{safe_quiz_name}.json")
+        
+        # Load answers from JSON file
+        with open(json_path, 'r', encoding='utf-8') as f:
+            answer_data = json.load(f)
+        
+        # Get answers dictionary
+        answers_dict = answer_data.get('answers', {})
+        
+        if answers_dict:
+            # Wait for questions to load
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "question_holder"))
+            )
+            
+            # Get all question holders
+            question_holders = driver.find_elements(By.CLASS_NAME, "question_holder")
+            
+            for question_number, answer in answers_dict.items():
+                try:
+                    # Get corresponding question group element
+                    question_group = question_holders[int(question_number) - 1]
+                    
+                    if answer['type'] in ['multiple_choice_question', 'multiple_answers_question']:
+                        # Use stored values to click answers
+                        clicked_values = click_answers_by_values(driver, question_group, answer['value'])
+                        print(f"Question {question_number} answered with values: {clicked_values}")
+                    
+                    elif answer['type'] == 'numerical_question':
+                        # Get the first value from the value list
+                        value = answer['value'][0] if answer['value'] else None
+                        if value:
+                            input_field = question_group.find_element(
+                                By.CSS_SELECTOR, 
+                                "input.numerical_question_input"
+                            )
+                            input_field.clear()
+                            input_field.send_keys(value)
+                            print(f"Question {question_number} answered with value: {value}")
+                
+                except Exception as e:
+                    print(f"Error processing question {question_number}: {e}")
+                    continue
+            
+            submit_quiz(driver)
+            sleep(10)
+            return True
+            
+        else:
+            print(f"No answers found for quiz: {quiz_name}")
+            return False
+            
+    except Exception as e:
+        print(f"Error loading answers: {e}")
+        return False
+ 
