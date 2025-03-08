@@ -272,52 +272,97 @@ def load_answers(driver, quiz_name, url):
         safe_quiz_name = "".join(c for c in quiz_name if c.isalnum() or c in (' ', '-', '_')).strip()
         json_path = os.path.join(answers_dir, f"{safe_quiz_name}.json")
         
+        print(f"Looking for answers file: {json_path}")
+        
+        if not os.path.exists(json_path):
+            print(f"Answers file not found: {json_path}")
+            return False
+        
         # Load answers from JSON file
-        with open(json_path, 'r', encoding='utf-8') as f:
-            answer_data = json.load(f)
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                answer_data = json.load(f)
+                print(f"Successfully loaded answers data")
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON file: {e}")
+            return False
+        except Exception as e:
+            print(f"Error reading answers file: {e}")
+            return False
         
         # Get answers dictionary
         answers_dict = answer_data.get('answers', {})
+        if not answers_dict:
+            print("No answers found in JSON file")
+            return False
+
+        print(f"Navigating to quiz URL: {url}")
+        driver.get(url)
+        
+        print("Opening quiz...")
+        try:
+            open_quiz(driver)
+        except Exception as e:
+            print(f"Error opening quiz: {e}")
+            return False
         
         if answers_dict:
-            # Wait for questions to load
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "question_holder"))
-            )
-            
-            # Get all question holders
-            question_holders = driver.find_elements(By.CLASS_NAME, "question_holder")
-            
-            for question_number, answer in answers_dict.items():
-                try:
-                    # Get corresponding question group element
-                    question_group = question_holders[int(question_number) - 1]
-                    
-                    if answer['type'] in ['multiple_choice_question', 'multiple_answers_question']:
-                        # Use stored values to click answers
-                        clicked_values = click_answers_by_values(driver, question_group, answer['value'])
-                        print(f"Question {question_number} answered with values: {clicked_values}")
-                    
-                    elif answer['type'] == 'numerical_question':
-                        # Get the first value from the value list
-                        value = answer['value'][0] if answer['value'] else None
-                        if value:
-                            input_field = question_group.find_element(
-                                By.CSS_SELECTOR, 
-                                "input.numerical_question_input"
-                            )
-                            input_field.clear()
-                            input_field.send_keys(value)
-                            print(f"Question {question_number} answered with value: {value}")
+            try:
+                # Wait for questions to load
+                print("Waiting for questions to load...")
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "question_holder"))
+                )
                 
-                except Exception as e:
-                    print(f"Error processing question {question_number}: {e}")
-                    continue
-            
-            submit_quiz(driver)
-            sleep(10)
-            return True
-            
+                # Get all question holders
+                question_holders = driver.find_elements(By.CLASS_NAME, "question_holder")
+                print(f"Found {len(question_holders)} questions")
+                
+                for question_number, answer in answers_dict.items():
+                    try:
+                        print(f"\nProcessing question {question_number}")
+                        # Get corresponding question group element
+                        q_index = int(question_number) - 1
+                        if q_index >= len(question_holders):
+                            print(f"Question index out of range: {q_index}")
+                            continue
+                            
+                        question_group = question_holders[q_index]
+                        
+                        # Scroll question into view
+                        driver.execute_script("arguments[0].scrollIntoView(true);", question_group)
+                        sleep(0.5)  # Small delay after scrolling
+                        
+                        if answer['type'] in ['multiple_choice_question', 'multiple_answers_question']:
+                            print(f"Answering {answer['type']} with values: {answer['value']}")
+                            clicked_values = click_answers_by_values(driver, question_group, answer['value'])
+                            print(f"Successfully clicked values: {clicked_values}")
+                        
+                        elif answer['type'] == 'numerical_question':
+                            value = answer['value'][0] if answer['value'] else None
+                            if value:
+                                print(f"Entering numerical value: {value}")
+                                input_field = question_group.find_element(
+                                    By.CSS_SELECTOR, 
+                                    "input.numerical_question_input"
+                                )
+                                input_field.clear()
+                                input_field.send_keys(value)
+                                print(f"Successfully entered value: {value}")
+                    
+                    except Exception as e:
+                        print(f"Error processing question {question_number}: {e}")
+                        continue
+                
+                print("\nSubmitting quiz...")
+                submit_quiz(driver)
+                sleep(10)
+                return True
+                
+            except Exception as e:
+                print(f"Error processing questions: {e}")
+                return False
+                
         else:
             print(f"No answers found for quiz: {quiz_name}")
             return False
@@ -325,4 +370,3 @@ def load_answers(driver, quiz_name, url):
     except Exception as e:
         print(f"Error loading answers: {e}")
         return False
- 
