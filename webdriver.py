@@ -26,15 +26,11 @@ def init_driver(headless=False):
         options.add_argument("-headless")
     
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-  # 设置页面缩放比例，例如70%
-    zoom_level = 0.7
-    driver.execute_script(f"document.body.style.zoom = {zoom_level}")
-
-    # 设置窗口大小
-    # 获取屏幕分辨率
-    screen_width = driver.execute_script("return window.screen.width")
-    screen_height = driver.execute_script("return window.screen.height")
-    driver.set_window_size(screen_width, screen_height)
+    driver.maximize_window()
+    sleep(1)
+    zoom_out= "document.body.style.zoom='0.5'"
+    driver.execute_script(zoom_out)
+    sleep(1)
     return driver, user_name, password
 
 def click_element(driver, element, by='css selector', timeout=10):

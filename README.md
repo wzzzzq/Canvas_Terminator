@@ -18,6 +18,7 @@ An automated tool to solve Canvas quizzes using Selenium WebDriver and GPT-based
   - Multiple choice questions
   - Multiple answer questions
   - Numerical questions
+  - Fill in multiple blanks questions
 - Save quiz answers locally for future attempts
 - Reuse previous answers when retaking quizzes
 - Screenshot questions for AI processing
@@ -135,4 +136,3 @@ Answers are saved in JSON format:
 - Answers can be reused for multiple attempts
 - Screenshots are saved for verification
 - Console output provides detailed progress information
-

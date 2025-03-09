@@ -130,7 +130,7 @@ class GPTClientBase:
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": f"data:image/jpeg;base64,{img_base64}"
+                                "url": f"data:image/png;base64,{img_base64}"
                             }
                         },
                         {
@@ -176,13 +176,21 @@ class GPTClientBase:
 from dotenv import load_dotenv
 load_dotenv()
 
-GLM1 = GPTClientBase(os.getenv("GLM_API_KEY"), "glm-4-air", "https://open.bigmodel.cn/api/paas/v4/", "智谱")
-GLM2 = GPTClientBase(os.getenv("GLM_API_KEY"), "glm-4v-plus-0111", "https://open.bigmodel.cn/api/paas/v4/", "智谱")
+GLM1 = GPTClientBase(os.getenv("GLM_API_KEY"), "glm-4-plus", "https://open.bigmodel.cn/api/paas/v4/", "智谱")
+GLM2 = GPTClientBase(os.getenv("GLM_API_KEY"), "glm-4v-plus", "https://open.bigmodel.cn/api/paas/v4/", "智谱")
+DOUBAO1 = GPTClientBase(os.getenv("ARK_API_KEY"), "doubao-1-5-vision-pro-32k-250115", "https://ark.cn-beijing.volces.com/api/v3", "ByteDance")
+DOUBAO2 = GPTClientBase(os.getenv("ARK_API_KEY"), "doubao-vision-pro-32k-241028", "https://ark.cn-beijing.volces.com/api/v3", "ByteDance")
+DOUBAO3 = GPTClientBase(os.getenv("ARK_API_KEY"), "doubao-1-5-pro-256k-250115", "https://ark.cn-beijing.volces.com/api/v3", "ByteDance")
+DeepSeek = GPTClientBase(os.getenv("ARK_API_KEY"), "deepseek-r1-250120", "https://ark.cn-beijing.volces.com/api/v3", "DeepSeek")
 
 def get_gpt_clients() -> list:
     return [
-        ("GLM-4", GLM2),
-
+        ("GLM-4V", GLM2),
+        ("DOUBAO-1.5V", DOUBAO1),
+        ("DOUBAO-V-PRO", DOUBAO2),
+        ("DOUBAO-1.5-PRO", DOUBAO3),
+        ("GLM-4+", GLM1),
+        ("DeepSeek", DeepSeek),
     ]
 
 def get_gpt_client_dict() -> dict:
