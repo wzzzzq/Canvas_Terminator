@@ -42,8 +42,7 @@ def get_prompt_text(quiz_name, question_type, question, options):
         """,
 
         'text_only_question': f"""
-        The following is a Context Storage task on the subject of {quiz_name}
-
+        The following is a piece of context which may be useful in the following questions
         CONTENT: {question}
 
         No output is required. Store the context for future questions.
@@ -92,7 +91,7 @@ def get_prompt_image(quiz_name, question_type):
         """,
 
         'text_only_question': f"""
-        You are given a text-only question on the subject of {quiz_name} in the image attached. Please carefully analyze the image and remember the content because it will be used in the following questions. You mustn't output any text in response to this question.
+        You are given a piece of context on the subject of {quiz_name} in the image attached. Please carefully analyze the image and remember the content because it will be used in the following questions. You mustn't output any text in response to this question.
         YOU MUST NOT OUTPUT ANY TEXT OR SYMBOLS IN RESPONSE TO THIS QUESTION!
         """,
 
@@ -105,3 +104,8 @@ def get_prompt_image(quiz_name, question_type):
         """
     }
     return prompt_bank.get(question_type, "Invalid question type")
+
+def get_feedback_prompt(wrong_answer):
+    feedback_prompt = f"""Your answer is incorrect. Pleae try again. Make sure to output only the correct answer according to the previous instructions without any additional text or symbols.
+    Known wrong answers: {wrong_answer}"""
+    return feedback_prompt

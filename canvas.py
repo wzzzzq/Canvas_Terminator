@@ -183,3 +183,58 @@ def find_available_quizzes(driver, quiz_name):
         print(f"- {title}: {url}")
     
     return available_quizzes
+
+def get_quiz_scores(driver):
+    """Get current and kept scores from quiz results page
+    
+    Returns:
+        tuple: (current_score, total_points, kept_score) or None if scores not found
+    """
+    try:
+        # Wait for score table to be present
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "summary"))
+        )
+        
+        # Find score rows
+        score_rows = driver.find_elements(By.CSS_SELECTOR, "table.summary tr")
+        
+        current_score = None
+        kept_score = None
+        
+        for row in score_rows:
+            try:
+                header = row.find_element(By.TAG_NAME, "th").text.strip()
+                value = row.find_element(By.TAG_NAME, "td").text.strip()
+                
+                if "Current Score:" in header:
+                    # Parse "X out of Y" format
+                    score, total = map(float, value.split(" out of "))
+                    current_score = (score, total)
+                    
+                elif "Kept Score:" in header:
+                    score, total = map(float, value.split(" out of "))
+                    kept_score = (score, total)
+                    
+            except Exception as e:
+                print(f"Error parsing score row: {e}")
+                continue
+        
+        if current_score or kept_score:
+            print("\nQuiz Scores:")
+            if current_score:
+                print(f"Current Score: {current_score[0]} out of {current_score[1]}")
+            if kept_score:
+                print(f"Kept Score: {kept_score[0]} out of {kept_score[1]}")
+            
+            return {
+                'current_score': current_score[0] if current_score else None,
+                'total_points': current_score[1] if current_score else None,
+                'kept_score': kept_score[0] if kept_score else None
+            }
+            
+        return None
+        
+    except Exception as e:
+        print(f"Error getting quiz scores: {e}")
+        return None

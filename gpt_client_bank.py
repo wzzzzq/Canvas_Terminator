@@ -12,28 +12,16 @@ class GPTClientBase:
         self.content = None
         self.conversation_history = []
 
-    def send_text(self, msg, max_tokens=None):
+    def send_text(self, msg, max_tokens=None, add_to_history=False):
         attempts = 0
         while attempts < 5:
             try:
-                params = {
-                    "model": self.model,
-                    "messages": [{"role": "user", "content": msg}]
-                }
-                if max_tokens:
-                    params["max_tokens"] = max_tokens
-                    
-                self.content = self.client.chat.completions.create(**params)
-                return self.get_response()
-            except Exception as e:
-                attempts += 1
-                if attempts >= 5:
-                    raise e
-
-    def send_messages(self, conv, max_tokens=None):
-        attempts = 0
-        while attempts < 5:
-            try:
+                new_message = {"role": "user", "content": msg}
+                conv = self.conversation_history.copy()
+                conv.append(new_message)
+                if add_to_history:
+                    self.conversation_history.append(new_message)
+                
                 params = {
                     "model": self.model,
                     "messages": conv
@@ -42,6 +30,11 @@ class GPTClientBase:
                     params["max_tokens"] = max_tokens
                     
                 self.content = self.client.chat.completions.create(**params)
+                if add_to_history:
+                    self.conversation_history.append({
+                        "role": "assistant",
+                        "content": self.get_response()
+                    })
                 return self.get_response()
             except Exception as e:
                 attempts += 1
@@ -50,62 +43,43 @@ class GPTClientBase:
 
     def get_response(self):
         return self.content.choices[0].message.content if self.content else None
-    
-    def send_image(self, text, image_path, max_tokens=None):
-        """Send text and image to the model and get response.
-        
-        Args:
-            text (str): The text prompt to send
-            image_path (str): Path to the image file
-            max_tokens (int, optional): Maximum number of tokens in response
-        
-        Returns:
-            str: Model's response or None if failed
-        """
-        attempts = 0
-        while attempts < 5:
-            try:
-                # Read and encode image
-                with open(image_path, 'rb') as img_file:
-                    img_base64 = base64.b64encode(img_file.read()).decode('utf-8')
-                
-                # Create message with text and image
-                messages = [
+
+    def create_context(self, text, image_path):
+        if image_path is None:
+            self.context = [{
+                "role": "user",
+                "content": [
                     {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{img_base64}"
-                                }
-                            },
-                            {
-                                "type": "text",
-                                "text": text
-                            }
-                        ]
+                        "type": "text",
+                        "text": text
                     }
                 ]
-                
-                # Send to API with optional max_tokens
-                params = {
-                    "model": self.model,
-                    "messages": messages
-                }
-                if max_tokens:
-                    params["max_tokens"] = max_tokens
-                    
-                self.content = self.client.chat.completions.create(**params)
-                return self.get_response()
-                
-            except Exception as e:
-                attempts += 1
-                if attempts >= 5:
-                    print(f"Failed to process image after {attempts} attempts: {str(e)}")
-                    raise e
-
-    def send_image_with_history(self, text, image_path, max_tokens=None):
+            }]
+        else:
+            with open(image_path, 'rb') as img_file:
+                img_base64 = base64.b64encode(img_file.read()).decode('utf-8')
+            self.context = [{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/png;base64,{img_base64}"
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": text
+                    }
+                ]
+            }]
+        self.conversation_history = self.context
+    
+    def remove_context(self):
+        self.context = []
+        self.conversation_history = []
+        
+    def send_image(self, text, image_path, max_tokens=None, add_to_history=False):
         """Send text and image while maintaining conversation history.
         
         Args:
@@ -139,14 +113,16 @@ class GPTClientBase:
                         }
                     ]
                 }
-                
-                # Add new message to history
-                self.conversation_history.append(new_message)
-                
+                conv = self.conversation_history.copy()
+                conv.append(new_message)
+                if add_to_history:
+                    # Add new message to history
+                    self.conversation_history.append(new_message)
+                    
                 # Send to API with history
                 params = {
                     "model": self.model,
-                    "messages": self.conversation_history
+                    "messages": conv
                 }
                 if max_tokens:
                     params["max_tokens"] = max_tokens
@@ -155,7 +131,7 @@ class GPTClientBase:
                 response = self.get_response()
                 
                 # Add assistant's response to history
-                if response:
+                if response and add_to_history:
                     self.conversation_history.append({
                         "role": "assistant",
                         "content": response
@@ -171,7 +147,7 @@ class GPTClientBase:
     
     def reset_conversation(self):
         """Reset the conversation history"""
-        self.conversation_history = []
+        self.conversation_history = self.context.copy() if hasattr(self, 'context') else []
 
 from dotenv import load_dotenv
 load_dotenv()

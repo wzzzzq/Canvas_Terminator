@@ -2,3 +2,7 @@
 
 # Ignore .env files
 .env
+
+# Ignore screenshots and answers directories
+screenshots/
+answers/
