@@ -1,110 +1,109 @@
-# Canvas_Terminator
+# 基于Selenium和LLM大模型的交大canvas解题助手
 
-An automated tool to solve SJTU Canvas quizzes using Selenium WebDriver and GPT-based AI models.
+一款使用Selenium WebDriver和基于GPT的AI模型自动解答Canvas测验的工具。
 
-*Read this in other languages: [English](README.md), [简体中文](README_zh.md)*
+*其他语言版本: [English](README_en.md), [简体中文](README.md)*
 
-## Disclaimer
+## 免责声明
 
-**Note: Please ensure compliance with your school's academic policies when using this tool. It is intended for research purposes only. Some features require legitimate API services, so please apply for the necessary permissions.**
+**注意：实际使用时请确保遵守学校教学管理规定，本工具仅用于技术研究目的。部分功能需要配合合法的API服务使用，请自行申请相关接口权限。**
 
-## Features
+## 功能特点
 
-- Automatic login to Canvas with captcha recognition
-- Find and navigate to specific courses and quizzes
-- Support multiple question types:
-  - Multiple choice questions
-  - Multiple answer questions
-  - Numerical questions
-  - Fill in multiple blanks questions
-- Save quiz answers locally for future attempts
-- Reuse previous answers when retaking quizzes
-- Screenshot questions for AI processing
-- GPT-based answer generation
+- 自动登录Canvas系统（含验证码识别）
+- 查找并导航至特定课程和测验
+- 支持多种题型：
+  - 单选题
+  - 多选题
+  - 数值题
+  - 多空填空题
+- 本地保存答案以便将来使用
+- 重复测验时可重用之前的答案
+- 对题目截图或提取以进行AI处理
+- 基于GPT的答案生成
 
-## Prerequisites
+## 系统要求
 
 - Python 3.8+
-- Chrome browser
-- JAccount credentials for SJTU Canvas
-- Tesseract (Used to recognize the captcha when logging in)
+- Chrome浏览器
+- Tesseract（用于登录时的验证码识别）
 
-    For Ubuntu Users, you can use the following command:
+    Ubuntu用户可使用以下命令安装：
     ```bash
     sudo apt-get install tesseract-ocr
     ```
 
-## Installation
+## 安装方法
 
-1. Clone the repository:
+1. 克隆仓库：
     ```bash
     git clone https://github.com/yourusername/Auto_Canvas_Quiz.git
     cd Auto_Canvas_Quiz
     ```
 
-2. (Optional) Create Virtual Environment
+2. （可选）创建虚拟环境：
     ```bash
     conda create -n canvas python=3.10
     conda activate canvas
     ```
 
-3. Install required packages:
+3. 安装所需软件包：
     ```bash
     pip install -r requirements.txt
     ```
 
-4. Set up environment variables:
+4. 设置环境变量：
+    在config.py根据注释设置账号密码，AI工具的API key，以及解题模型
 
-  Check out config.py and set up your JACCOUNT and API key
+    本项目目前默认使用火山引擎的豆包和deepseek，以及GLM模型
 
-## Usage
+## 使用方法
 
-1. Run the main script:
+1. 运行主脚本：
     ```bash
     python main.py
     ```
 
-2. The script will:
-   - Login to Canvas automatically
-   - Navigate to specified course
-   - AI mode:
+2. 脚本将会：
+   - 自动登录Canvas
+   - 导航到指定课程
+   - AI模式：
    
-        - Find available quizzes
-        - Take screenshots of questions
-        - Generate answers using AI
-        - Submit responses
-        - Save answers for future use
+        - 查找可用测验
+        - 对问题截图
+        - 使用AI生成答案
+        - 提交答案
+        - 保存答案以供将来使用
         
-    - Saved Answer mode (only visible when there is local answer):
+    - 已保存答案模式（仅在有本地答案时可见）：
    
-        - Load local answers from the correct_answers folder
-        - Submit responses
+        - 加载本地答案 （从correct_answer文件夹）
+        - 提交答案
 
-## Project Structure
+## 项目结构
 
 ```
 Canvas_Terminator/
-├── main.py             # Main entry point
-├── solve.py            # Quiz solving logic
-├── canvas.py           # Canvas interaction functions
-├── webdriver.py        # Selenium WebDriver setup
-├── gpt_client_bank.py  # GPT client implementations
-├── prompt_bank.py      # AI prompts for different questions
-├── config.py           # Configurations
-├── screenshots/        # Question screenshots
-├── answers/            # Saved quiz answers
-└── utils/              # Utility functions
+├── main.py             # 主入口
+├── solve.py            # 测验解答逻辑
+├── canvas.py           # Canvas交互函数
+├── webdriver.py        # Selenium WebDriver设置
+├── gpt_client_bank.py  # GPT客户端实现
+├── prompt_bank.py      # 不同问题的AI提示
+├── config.py           # 配置文件
+├── screenshots/        # 问题截图
+├── answers/            # 保存的测验答案
+└── utils/              # 工具函数
 ```
 
-## Configuration
+## 配置
 
-- Questions are saved as screenshots in `screenshots/<quiz_name>/`
-- Answers are saved as JSON in `answers/<quiz_name>.json`
-- GPT prompts can be customized in `prompt_bank.py`
+- 问题截图保存在 `screenshots/<quiz_name>/` 目录下
+- 答案以JSON格式保存在 `answers/<quiz_name>.json` 文件中
+- GPT提示可以在 `prompt_bank.py` 中自定义
+## 答案格式
 
-## Answer Format
-
-Answers are saved in JSON format:
+答案以JSON格式保存：
 ```json
 {
   "quiz_name": "Quiz 1",
@@ -124,9 +123,9 @@ Answers are saved in JSON format:
 }
 ```
 
-## Notes
+## 注意事项
 
-- The tool respects quiz availability and attempt limits
-- Answers can be reused for multiple attempts
-- Screenshots are saved for verification
-- Console output provides detailed progress information
+- 工具会尊重测验的可用性和尝试限制
+- 答案可以用于多次尝试
+- 截图保存以供验证
+- 控制台输出提供详细的进度信息

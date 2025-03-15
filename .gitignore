@@ -6,3 +6,4 @@ config.py
 # Ignore screenshots and answers directories
 screenshots/
 answers/
+correct_answers/

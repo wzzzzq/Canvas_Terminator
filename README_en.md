@@ -1,0 +1,132 @@
+# Canvas_Terminator
+
+An automated tool to solve SJTU Canvas quizzes using Selenium WebDriver and GPT-based AI models.
+
+*Read this in other languages: [English](README_en.md), [简体中文](README.md)*
+
+## Disclaimer
+
+**Note: Please ensure compliance with your school's academic policies when using this tool. It is intended for research purposes only. Some features require legitimate API services, so please apply for the necessary permissions.**
+
+## Features
+
+- Automatic login to Canvas with captcha recognition
+- Find and navigate to specific courses and quizzes
+- Support multiple question types:
+  - Multiple choice questions
+  - Multiple answer questions
+  - Numerical questions
+  - Fill in multiple blanks questions
+- Save quiz answers locally for future attempts
+- Reuse previous answers when retaking quizzes
+- Screenshot questions for AI processing
+- GPT-based answer generation
+
+## Prerequisites
+
+- Python 3.8+
+- Chrome browser
+- JAccount credentials for SJTU Canvas
+- Tesseract (Used to recognize the captcha when logging in)
+
+    For Ubuntu Users, you can use the following command:
+    ```bash
+    sudo apt-get install tesseract-ocr
+    ```
+
+## Installation
+
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/yourusername/Auto_Canvas_Quiz.git
+    cd Auto_Canvas_Quiz
+    ```
+
+2. (Optional) Create Virtual Environment
+    ```bash
+    conda create -n canvas python=3.10
+    conda activate canvas
+    ```
+
+3. Install required packages:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4. Set up environment variables:
+
+  Check out config.py and set up your JACCOUNT and API key
+
+## Usage
+
+1. Run the main script:
+    ```bash
+    python main.py
+    ```
+
+2. The script will:
+   - Login to Canvas automatically
+   - Navigate to specified course
+   - AI mode:
+   
+        - Find available quizzes
+        - Take screenshots of questions
+        - Generate answers using AI
+        - Submit responses
+        - Save answers for future use
+        
+    - Saved Answer mode (only visible when there is local answer):
+   
+        - Load local answers from the correct_answers folder
+        - Submit responses
+
+## Project Structure
+
+```
+Canvas_Terminator/
+├── main.py             # Main entry point
+├── solve.py            # Quiz solving logic
+├── canvas.py           # Canvas interaction functions
+├── webdriver.py        # Selenium WebDriver setup
+├── gpt_client_bank.py  # GPT client implementations
+├── prompt_bank.py      # AI prompts for different questions
+├── config.py           # Configurations
+├── screenshots/        # Question screenshots
+├── answers/            # Saved quiz answers
+└── utils/              # Utility functions
+```
+
+## Configuration
+
+- Questions are saved as screenshots in `screenshots/<quiz_name>/`
+- Answers are saved as JSON in `answers/<quiz_name>.json`
+- GPT prompts can be customized in `prompt_bank.py`
+
+## Answer Format
+
+Answers are saved in JSON format:
+```json
+{
+  "quiz_name": "Quiz 1",
+  "timestamp": "2025-03-08T14:30:00.123456",
+  "answers": {
+    "1": {
+      "type": "multiple_choice_question",
+      "response": "B",
+      "value": ["2412"]
+    },
+    "2": {
+      "type": "multiple_answers_question",
+      "response": "ABC",
+      "value": ["1234", "5678", "9012"]
+    }
+  }
+}
+```
+
+## Notes
+
+- The tool respects quiz availability and attempt limits
+- Answers can be reused for multiple attempts
+- Screenshots are saved for verification
+- Console output provides detailed progress information
