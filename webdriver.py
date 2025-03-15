@@ -6,17 +6,14 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from dotenv import load_dotenv
-import os
 from time import sleep
+import config
 
 def init_driver(headless=False):
     """Initialize and return a Chrome WebDriver"""
-    # Load environment variables
-    load_dotenv()
-    
-    # Get credentials
-    user_name = os.getenv('JACCOUNT_USERNAME')
-    password = os.getenv('JACCOUNT_PASSWORD')
+    # Get credentials from config
+    user_name = config.user_name
+    password = config.password
     
     if not user_name or not password:
         raise ValueError("Missing credentials in .env file")

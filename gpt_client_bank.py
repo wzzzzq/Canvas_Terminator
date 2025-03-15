@@ -149,15 +149,13 @@ class GPTClientBase:
         """Reset the conversation history"""
         self.conversation_history = self.context.copy() if hasattr(self, 'context') else []
 
-from dotenv import load_dotenv
-load_dotenv()
-
-GLM1 = GPTClientBase(os.getenv("GLM_API_KEY"), "glm-4-plus", "https://open.bigmodel.cn/api/paas/v4/", "智谱")
-GLM2 = GPTClientBase(os.getenv("GLM_API_KEY"), "glm-4v-plus", "https://open.bigmodel.cn/api/paas/v4/", "智谱")
-DOUBAO1 = GPTClientBase(os.getenv("ARK_API_KEY"), "doubao-1-5-vision-pro-32k-250115", "https://ark.cn-beijing.volces.com/api/v3", "ByteDance")
-DOUBAO2 = GPTClientBase(os.getenv("ARK_API_KEY"), "doubao-vision-pro-32k-241028", "https://ark.cn-beijing.volces.com/api/v3", "ByteDance")
-DOUBAO3 = GPTClientBase(os.getenv("ARK_API_KEY"), "doubao-1-5-pro-256k-250115", "https://ark.cn-beijing.volces.com/api/v3", "ByteDance")
-DeepSeek = GPTClientBase(os.getenv("ARK_API_KEY"), "deepseek-r1-250120", "https://ark.cn-beijing.volces.com/api/v3", "DeepSeek")
+import config
+GLM1 = GPTClientBase(config.GLM_API_KEY, "glm-4-plus", "https://open.bigmodel.cn/api/paas/v4/", "智谱")
+GLM2 = GPTClientBase(config.GLM_API_KEY, "glm-4v-plus", "https://open.bigmodel.cn/api/paas/v4/", "智谱")
+DOUBAO1 = GPTClientBase(config.ARK_API_KEY, "doubao-1-5-vision-pro-32k-250115", "https://ark.cn-beijing.volces.com/api/v3", "ByteDance")
+DOUBAO2 = GPTClientBase(config.ARK_API_KEY, "doubao-vision-pro-32k-241028", "https://ark.cn-beijing.volces.com/api/v3", "ByteDance")
+DOUBAO3 = GPTClientBase(config.ARK_API_KEY, "doubao-1-5-pro-256k-250115", "https://ark.cn-beijing.volces.com/api/v3", "ByteDance")
+DeepSeek = GPTClientBase(config.ARK_API_KEY, "deepseek-r1-250120", "https://ark.cn-beijing.volces.com/api/v3", "DeepSeek")
 
 def get_gpt_clients() -> list:
     return [

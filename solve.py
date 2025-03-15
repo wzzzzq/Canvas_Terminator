@@ -7,7 +7,7 @@ from datetime import datetime
 from canvas import *
 from prompt_bank import *
 import json
-from config import debug_output, vision_model
+from config import debug_output, vision_model, text_model
 from answer_management import save_answers, load_answer_data, save_correct_answers
 
 # Add debug print function
@@ -21,7 +21,7 @@ def extract_questions_and_options(driver, quiz_name, image=False):
     quiz_data = []
     screenshot_dir = os.path.join(os.path.dirname(__file__), 'screenshots', "".join(c for c in quiz_name if c.isalnum() or c in (' ', '-', '_')).strip())
     os.makedirs(screenshot_dir, exist_ok=True)
-    
+    Image=False
     try:
         sleep(2)
         question_groups = WebDriverWait(driver, 10).until(
@@ -59,6 +59,7 @@ def extract_questions_and_options(driver, quiz_name, image=False):
                 has_hidden_images = "equation_image" in textarea or "<img" in textarea
                 
                 has_images = has_visible_images or has_hidden_images or image
+                Image = image or has_images
                 
                 question_data = {
                     'question_number': i,
@@ -135,7 +136,7 @@ def extract_questions_and_options(driver, quiz_name, image=False):
             except Exception as e:
                 print(f"Error processing question {i}: {e}")
                 
-        return quiz_data
+        return quiz_data, Image
         
     except Exception as e:
         print(f"Failed to process quiz: {e}")
@@ -228,18 +229,20 @@ def solve_all_quizzes(driver, quiz_name, image_mode=True):
  
         open_quiz(driver)
         sleep(2)
-        quiz_data = extract_questions_and_options(driver, quiz_name, image=image_mode)
-        
+        quiz_data, Image = extract_questions_and_options(driver, quiz_name, image=image_mode)
         # Initialize GPT client
         client_dict = get_gpt_client_dict()
-        
+        if Image:
+            model = vision_model
+        else:
+            model = text_model
         # Get clients based on config settings
-        if vision_model not in client_dict:
+        if model not in client_dict:
             print("Error: Invalid model names in config.py")
             return None
             
-        vision_client = client_dict[vision_model]
-        print(f"Vision model: {vision_model}")
+        client = client_dict[model]
+        print(f"Using model: {model}")
         
         if quiz_data:
             answers = []
@@ -250,7 +253,7 @@ def solve_all_quizzes(driver, quiz_name, image_mode=True):
             
             # Get all question holders
             question_holders = driver.find_elements(By.CLASS_NAME, "question_holder")
-            vision_client.remove_context()
+            client.remove_context()
             
             for question in quiz_data:
                 try:
@@ -275,7 +278,7 @@ def solve_all_quizzes(driver, quiz_name, image_mode=True):
                         continue
                     
                     # Solve question using AI
-                    answer_data = solve_question_with_ai(driver, question, question_group, vision_client)
+                    answer_data = solve_question_with_ai(driver, question, question_group, client)
                     
                     if answer_data:
                         answers.append(answer_data)
@@ -416,13 +419,17 @@ def solve_one_by_one(driver, quiz_name, url, image=False):
         # Open quiz and extract questions
         open_quiz(driver)
         sleep(2)
-        quiz_data = extract_questions_and_options(driver, quiz_name, image=image)
+        quiz_data, Image = extract_questions_and_options(driver, quiz_name, image=image)
         
         # Initialize GPT client
         client_dict = get_gpt_client_dict()
-        vision_client = client_dict[vision_model]
-        print(f"Using vision model: {vision_model}")
-        vision_client.remove_context()
+        if Image:
+            model = vision_model
+        else:
+            model = text_model
+        print(f"Using model: {model}")
+        client = client_dict[model]
+        client.remove_context()
         
         if not quiz_data:
             print("Failed to extract quiz data")
@@ -431,7 +438,7 @@ def solve_one_by_one(driver, quiz_name, url, image=False):
         # Process each question one by one
         for question in quiz_data:
             driver.get(url)
-            vision_client.reset_conversation()
+            client.reset_conversation()
             question_number = question['question_number']
             question_type = question['type']
             points = question.get('points', 0)
@@ -451,7 +458,7 @@ def solve_one_by_one(driver, quiz_name, url, image=False):
                 continue
                 
             question_group = question_holders[question_number - 1]
-            max_attempts = 5  # Set maximum attempts per question
+            max_attempts = 10  # Set maximum attempts per question
             wrong_answer = []
             # Try to solve this question until we get it right (or reach max attempts)
             for attempt in range(1, max_attempts + 1):
@@ -469,7 +476,7 @@ def solve_one_by_one(driver, quiz_name, url, image=False):
                     question['quiz_name'] = quiz_name
 
                     # Solve question using AI
-                    answer_data = solve_question_with_ai(driver, question, question_group, vision_client, add_to_history=True, retry=(attempt>1), wrong_answer = wrong_answer)
+                    answer_data = solve_question_with_ai(driver, question, question_group, client, add_to_history=True, retry=(attempt>1), wrong_answer = wrong_answer)
                     if question_type == 'text_only_question':
                         break
 
@@ -507,7 +514,7 @@ def solve_one_by_one(driver, quiz_name, url, image=False):
                         break
                     else:
                         print(f"✗ INCORRECT. Got {scores['current_score']} out of {points} points")
-                        wrong_answer.append(answer_data['response'])
+                        wrong_answer.append((answer_data['response'],f"{scores['current_score']} out of {points}"))
                         
                         # If this was the last attempt, move on
                         if attempt == max_attempts:
@@ -541,13 +548,22 @@ def solve_question_with_ai(driver, question, question_group, ai_client, add_to_h
         question_type = question['type']
         points = question.get('points', 0)
         
+        if question.get('has_images', True):
+            prompt = get_prompt_image(question.get('quiz_name', ''), question_type)
+        else:
+            prompt = get_prompt_text(
+                question.get('quiz_name', ''),
+                question_type, 
+                question['question_text'], 
+                question['answers']
+            )
+
         if retry:
             print(f"Retrying question {question_number}")
-            response = ai_client.send_text(get_feedback_prompt(wrong_answer=wrong_answer), max_tokens=50, add_to_history=True)
+            response = ai_client.send_text(get_feedback_prompt(question=prompt,wrong_answer=wrong_answer), max_tokens=50, add_to_history=False)
         else:
             # Get AI response to the question
             if question.get('has_images', True):
-                prompt = get_prompt_image(question.get('quiz_name', ''), question_type)
                 # Create context for next question if needed
                 if question_type == 'text_only_question':
                     ai_client.create_context(prompt, question['screenshot_path'] if question.get('has_images') else None)
@@ -559,12 +575,6 @@ def solve_question_with_ai(driver, question, question_group, ai_client, add_to_h
                     add_to_history=add_to_history
                 )
             else:
-                prompt = get_prompt_text(
-                    question.get('quiz_name', ''),
-                    question_type, 
-                    question['question_text'], 
-                    question['answers']
-                )
                 # Create context for next question if needed
                 if question_type == 'text_only_question':
                     ai_client.create_context(prompt, question['screenshot_path'] if question.get('has_images') else None)

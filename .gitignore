@@ -1,7 +1,7 @@
 # .gitignore
 
-# Ignore .env files
-.env
+config.py
+
 
 # Ignore screenshots and answers directories
 screenshots/

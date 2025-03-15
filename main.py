@@ -3,6 +3,7 @@ from canvas import *
 from solve import *
 import os
 from config import *
+from localization import get_text
 
 def check_saved_answers(quiz_name):
     """Check if answers exist for the quiz"""
@@ -13,7 +14,7 @@ def check_saved_answers(quiz_name):
 def main():
     driver, user_name, password = init_driver(headless=headless)
     try:
-        print("Welcome to the Canvas Quiz Solver!")
+        print(get_text("welcome"))
         
         while True:
             # Login to Canvas
@@ -28,10 +29,10 @@ def main():
             available_quizzes = find_available_quizzes(driver, quiz_search)
             
             if not available_quizzes:
-                print(f"\nNo available quizzes found matching '{quiz_search}'")
+                print(get_text("no_quizzes", quiz_search))
                 continue
                 
-            print(f"\nFound {len(available_quizzes)} available quizzes:")
+            print(get_text("found_quizzes", len(available_quizzes)))
             for title in available_quizzes.keys():
                 print(f"- {title}")
             
@@ -47,37 +48,37 @@ def main():
                             print("Error getting quiz scores")
                             pass
                         # Prompt user for action
-                        print(f"\nProcessing quiz: {title}")
+                        print(f"\n{get_text('processing_quiz', title)}")
                         if has_saved:
-                            print("1. Use saved answers")
-                            print("2. Solve with AI (auto mode)")
-                            print("3. Solve with AI (image mode)")
-                            print("4. Solve one by one (verify each answer)")
-                            print("5. Skip this quiz")
-                            print("6. Exit program")
-                            choice = input("Enter your choice (1-6): ").strip()
+                            print(f"1. {get_text('use_saved')}")
+                            print(f"2. {get_text('solve_auto')}")
+                            print(f"3. {get_text('solve_image')}")
+                            print(f"4. {get_text('solve_verify')}")
+                            print(f"5. {get_text('skip_quiz')}")
+                            print(f"6. {get_text('exit_program')}")
+                            choice = input(get_text("enter_choice_saved")).strip()
                             
                             if choice == '6':
-                                print("Exiting program...")
+                                print(get_text("exiting"))
                                 return
                             if choice not in ['1', '2', '3', '4', '5']:
-                                print("Invalid choice. Please try again.")
+                                print(get_text("invalid_choice"))
                                 continue
                             if choice == '5':
                                 break
                         else:
-                            print("1. Solve with AI (auto mode)")
-                            print("2. Solve with AI (image mode)")
-                            print("3. Solve one by one (verify each answer)")
-                            print("4. Skip this quiz")
-                            print("5. Exit program")
-                            choice = input("Enter your choice (1-5): ").strip()
+                            print(f"1. {get_text('solve_auto')}")
+                            print(f"2. {get_text('solve_image')}")
+                            print(f"3. {get_text('solve_verify')}")
+                            print(f"4. {get_text('skip_quiz')}")
+                            print(f"5. {get_text('exit_program')}")
+                            choice = input(get_text("enter_choice_no_saved")).strip()
                             
                             if choice == '5':
-                                print("Exiting program...")
+                                print(get_text("exiting"))
                                 return
                             if choice not in ['1', '2', '3', '4']:
-                                print("Invalid choice. Please try again.")
+                                print(get_text("invalid_choice"))
                                 continue
                             if choice == '4':
                                 break
@@ -85,19 +86,19 @@ def main():
                         try:
                             # Process based on user choice
                             if has_saved and choice == '1':
-                                print(f"Loading saved answers for {title}...")
+                                print(get_text("loading_answers", title))
                                 load_answers(driver, title, url)
                             elif (has_saved and choice == '2') or (not has_saved and choice == '1'):
-                                print(f"Solving {title} with AI in auto mode...")
+                                print(get_text("solving_auto", title))
                                 solve_all_quizzes(driver, title, image_mode=False)
                             elif (has_saved and choice == '3') or (not has_saved and choice == '2'):
-                                print(f"Solving {title} with AI in image mode...")
+                                print(get_text("solving_image", title))
                                 solve_all_quizzes(driver, title, image_mode=True)
                             elif (has_saved and choice == '4') or (not has_saved and choice == '3'):
-                                print(f"Solving {title} one by one, verifying each answer...")
+                                print(get_text("solving_verify", title))
                                 solve_one_by_one(driver, title, url, image=False)
                             else:
-                                print(f"Skipping {title}")
+                                print(get_text("skipping", title))
                                 continue
                                 
                         except Exception as e:

@@ -188,16 +188,14 @@ def get_quiz_scores(driver):
     """Get current and kept scores from quiz results page
     
     Returns:
-        tuple: (current_score, total_points, kept_score) or None if scores not found
+        dict: Dictionary with current_score, total_points, and kept_score
     """
     try:
-        # Wait for score table to be present
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "summary"))
-        )
-        
+        sleep(0.5)
         # Find score rows
         score_rows = driver.find_elements(By.CSS_SELECTOR, "table.summary tr")
+        if len(score_rows)==0:
+            return None
         
         current_score = None
         kept_score = None
@@ -232,8 +230,7 @@ def get_quiz_scores(driver):
                 'total_points': current_score[1] if current_score else None,
                 'kept_score': kept_score[0] if kept_score else None
             }
-            
-        return None
+     
         
     except Exception as e:
         print(f"Error getting quiz scores: {e}")
