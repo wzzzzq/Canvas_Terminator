@@ -1,4 +1,4 @@
-# 基于Selenium和LLM大模型的交大canvas解题助手
+# 基于Selenium和LLM大模型的canvas解题助手
 
 一款使用Selenium WebDriver和基于GPT的AI模型自动解答Canvas测验的工具。
 
@@ -12,7 +12,7 @@
 
 ## 功能特点
 
-- 自动登录Canvas系统（含验证码识别）
+- 自动登录SJTU Canvas系统（含验证码识别）
 - 查找并导航至特定课程和测验
 - 支持多种题型：
   - 单选题
