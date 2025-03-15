@@ -1,14 +1,14 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from gpt_client_bank import get_gpt_client_dict
+from gpt.gpt_client_bank import get_gpt_client_dict
 import os
 from datetime import datetime
-from canvas import *
-from prompt_bank import *
+from canvas.canvas import *
+from gpt.prompt_bank import *
 import json
 from config import debug_output, vision_model, text_model
-from answer_management import save_answers, load_answer_data, save_correct_answers
+from utils.answer_management import save_answers, load_answer_data, save_correct_answers
 
 # Add debug print function
 def debug_print(message):

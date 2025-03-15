@@ -7,7 +7,7 @@ import pytz
 from time import sleep
 
 from utils.captcha_rec import captcha_rec
-from webdriver import init_driver, click_element
+from utils.webdriver import init_driver, click_element
 
 def login(driver, user_name, password):
     """Log in to Canvas"""
@@ -191,7 +191,7 @@ def get_quiz_scores(driver):
         dict: Dictionary with current_score, total_points, and kept_score
     """
     try:
-        sleep(0.5)
+        sleep(1)
         # Find score rows
         score_rows = driver.find_elements(By.CSS_SELECTOR, "table.summary tr")
         if len(score_rows)==0:

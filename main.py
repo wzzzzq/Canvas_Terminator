@@ -1,10 +1,10 @@
-from webdriver import init_driver
-from canvas import *
+from utils.webdriver import init_driver
+from canvas.canvas import *
 from solve import *
 import os
 from config import *
-from localization import get_text
-
+from utils.localization import get_text
+from utils.messages import send_wechat
 def check_saved_answers(quiz_name):
     """Check if answers exist for the quiz"""
     safe_quiz_name = "".join(c for c in quiz_name if c.isalnum() or c in (' ', '-', '_')).strip()
@@ -43,7 +43,7 @@ def main():
                         has_saved = check_saved_answers(title)
                         driver.get(url)
                         try:
-                            get_quiz_scores(driver)
+                            score = get_quiz_scores(driver)
                         except:
                             print("Error getting quiz scores")
                             pass
@@ -97,12 +97,19 @@ def main():
                             elif (has_saved and choice == '4') or (not has_saved and choice == '3'):
                                 print(get_text("solving_verify", title))
                                 solve_one_by_one(driver, title, url, image=False)
+                                load_answers(driver, title, url)
                             else:
                                 print(get_text("skipping", title))
                                 continue
+                            driver.get(url)
+                            score = get_quiz_scores(driver)
+                            if WECHAT != "":
+                                send_wechat(title=title,msg=f"本次尝试获得了{score['current_score']}/{score['total_points']}\n当前成绩{score['kept_score']}/{score['total_points']}",key=WECHAT)
                                 
                         except Exception as e:
                             print(f"Error processing quiz '{title}': {e}")
+                            if WECHAT != "":
+                                send_wechat(title=title,msg=f"Error processing quiz '{title}': {e}", key=WECHAT)
                             continue
                             
                     except Exception as e:

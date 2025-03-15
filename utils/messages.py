@@ -1,12 +1,15 @@
-import os
-import urllib.parse
-import urllib.request
+import requests
 
-# 微信通知API
-def send_message_fangtang(text, desp='', key='[SENDKEY]'):
-    postdata = urllib.parse.urlencode({'text': text, 'desp': desp}).encode('utf-8')
-    url = f'https://sctapi.ftqq.com/{key}.send'
-    req = urllib.request.Request(url, data=postdata, method='POST')
-    with urllib.request.urlopen(req) as response:
-        result = response.read().decode('utf-8')
-    return result
+def send_wechat(title, msg,key):
+    token = key
+    title = title
+    content = msg
+    template = 'html'
+    url = f"https://www.pushplus.plus/send?token={token}&title={title}&content={content}&template={template}"
+    print(url)
+    r = requests.get(url=url)
+    print(r.text)
+
+if __name__ == '__main__':
+    msg = 'Life is short I use python'
+    send_wechat("刷分只因",msg)
