@@ -16,7 +16,7 @@ def init_driver(headless=False):
     password = config.password
     
     if not user_name or not password:
-        raise ValueError("Missing credentials in .env file")
+        raise ValueError("Missing credentials in config file")
     
     options = Options()
     if headless:

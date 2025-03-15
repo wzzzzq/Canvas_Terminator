@@ -1,6 +1,7 @@
 # .gitignore
 config.py
-
+.json
+.png
 
 # Ignore screenshots and answers directories
 screenshots/
