@@ -35,7 +35,7 @@
 
 ## 安装方法
 
-1. 克隆仓库：
+1. 克隆仓库或直接在release中下载.zip：
     ```bash
     git clone https://github.com/yourusername/Auto_Canvas_Quiz.git
     cd Auto_Canvas_Quiz
