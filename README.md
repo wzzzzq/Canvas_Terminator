@@ -1,6 +1,6 @@
 # Canvas_Terminator
 
-An automated tool to solve Canvas quizzes using Selenium WebDriver and GPT-based AI models.
+An automated tool to solve SJTU Canvas quizzes using Selenium WebDriver and GPT-based AI models.
 
 *Read this in other languages: [English](README.md), [简体中文](README_zh.md)*
 
@@ -54,16 +54,8 @@ An automated tool to solve Canvas quizzes using Selenium WebDriver and GPT-based
     ```
 
 4. Set up environment variables:
-    ```bash
-    # Create .env file
-    touch .env
 
-    # Add your credentials and API keys
-    GLM_API_KEY=your_glm_api_key
-    ARK_API_KEY=your_ark_api_key
-    JACCOUNT_USERNAME=your_jaccount
-    JACCOUNT_PASSWORD=your_password
-    ```
+  Check out config.py and set up your JACCOUNT and API key
 
 ## Usage
 
