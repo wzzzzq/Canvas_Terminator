@@ -1,10 +1,20 @@
-headless = False
-debug_output = True
+# Canvas login credentials
+user_name = ""
+password = ""
 
-# Model selections
-text_model = "GLM-4+"  
-vision_model = "GLM-4V"
+# Quiz and course details
+course_name = "CHEM"
+quiz_name = ""
 
-# Quiz search settings
-course_name = "CHEM"  # Default course name/prefix to search
-quiz_name = "Pre-Lab"  # Default quiz name/prefix to search
+# Application settings
+headless = True  # Set to True for headless mode
+debug_output = False  # Set to True for more verbose output
+vision_model = "DOUBAO-1.5V"  # Vision model to use
+text_model = "DOUBAO-1.5-PRO"
+
+# Language setting (en for English, zh for Chinese)
+language = "zh"  # Change to "zh" for Chinese
+
+
+GLM_API_KEY = ""
+ARK_API_KEY = ""
