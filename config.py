@@ -3,8 +3,8 @@ user_name = ""
 password = ""
 
 # Quiz and course details
-course_name = "CHEM"
-quiz_name = ""
+course_name = "" #prefix or name of the course
+quiz_name = "" #prefix or name of quizzes
 
 # Application settings
 headless = True  # Set to True for headless mode
