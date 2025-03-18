@@ -3,6 +3,12 @@ import json
 from datetime import datetime
 from config import debug_output
 
+def check_saved_answers(quiz_name):
+    """Check if answers exist for the quiz"""
+    safe_quiz_name = "".join(c for c in quiz_name if c.isalnum() or c in (' ', '-', '_')).strip()
+    json_path = os.path.join(os.path.dirname(__file__), 'correct_answers', f"{safe_quiz_name}.json")
+    return os.path.exists(json_path)
+
 def debug_print(message):
     """Print debug messages if debug_output is enabled"""
     if debug_output:
