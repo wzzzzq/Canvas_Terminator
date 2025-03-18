@@ -19,14 +19,11 @@ Pillow>=10.2.0
 # JSON handling (usually part of Python standard library)
 json5>=0.9.14
 
-# Date and time handling (usually part of Python standard library)
-datetime
-
 # Basic HTTP requests
 requests>=2.31.0
 
 # Image processing for OCR
-pip install pytesseract
+pytesseract
 
 # Webmanager
-pip install webdriver-manager
+webdriver-manager
