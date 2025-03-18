@@ -1,6 +1,6 @@
 # 基于Selenium和LLM大模型的canvas解题助手
 
-一款使用Selenium WebDriver和基于GPT的AI模型自动解答Canvas测验的工具。
+一款使用Selenium WebDriver和基于GPT的AI模型辅助解答Canvas测验的工具。
 
 *其他语言版本: [English](README_en.md), [简体中文](README.md)*
 
