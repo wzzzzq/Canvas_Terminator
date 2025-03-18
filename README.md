@@ -35,6 +35,8 @@
     sudo apt-get install tesseract-ocr
     ```
 
+    Windows用户可以在[tesseract](https://digi.bib.uni-mannheim.de/tesseract/)下载 
+
 ## 安装方法
 
 1. 克隆仓库或直接在release中下载.zip：
